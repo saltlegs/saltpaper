@@ -45,6 +45,7 @@ class Layer:
         return surf
     
     def relative_coords(self, coords):
+        """takes a screen coordinate and converts it to local coordinates on the layer"""
         x, y = coords
         newcoords = (x - self.offset[0], y - self.offset[1])
         return newcoords

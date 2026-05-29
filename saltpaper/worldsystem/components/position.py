@@ -1,3 +1,5 @@
+import math
+
 class Position():
     def __init__(
             self,
@@ -23,8 +25,22 @@ class Position():
         self.layer = layer
 
     def move(self, dx, dy):
-        self.x += dx
-        self.y += dy
+        x, y = self.position
+        self.position = (x + dx, y + dy)
+
+    def move_toward(self, tx, ty, distance):
+        x, y = self.position
+        dx = tx - x
+        dy = ty - y
+        length = math.sqrt(dx*dx + dy*dy)
+        if length == 0:
+            return
+        nx = dx / length
+        ny = dy / length
+        self.position = (x + nx * distance, y + ny * distance)
+
+    def move_away(self, tx, ty, distance):
+        self.move_toward(tx, ty, -distance)
 
     def is_point_inside(self, point):
         x, y  = point

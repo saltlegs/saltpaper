@@ -49,3 +49,40 @@ class Entity():
                     setattr(component, name, value)
                     return
         object.__setattr__(self, name, value)
+
+    @staticmethod
+    def _component_attrs(component):
+        attrs = {}
+        if hasattr(component, "__dict__"):
+            attrs.update(component.__dict__)
+
+        slots = getattr(component, "__slots__", ())
+        if isinstance(slots, str):
+            slots = (slots,)
+        for slot in slots:
+            if hasattr(component, slot):
+                attrs[slot] = getattr(component, slot)
+
+        return {k: v for k, v in attrs.items() if not k.startswith("_")}
+
+    def __str__(self):
+        header = (
+            f"Entity(id: {self.id}, killed: {self.killed}, "
+            f"components: {len(self.components)})"
+        )
+        if not self.components:
+            return f"{header}\n  (no components)"
+
+        lines = [header]
+        for component in sorted(self.components.values(), key=lambda c: type(c).__name__):
+            comp_name = type(component).__name__
+            attrs = self._component_attrs(component)
+            if attrs:
+                formatted = ", ".join(
+                    f"{name}={value!r}" for name, value in sorted(attrs.items())
+                )
+                lines.append(f"  - {comp_name}({formatted})")
+            else:
+                lines.append(f"  - {comp_name}(no public attributes)")
+
+        return "\n".join(lines)

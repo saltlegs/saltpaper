@@ -57,6 +57,7 @@ class InputService():
         self.gamepad = None
         self.input_roster = {}
         self.events = []
+        self.mouse_relative_movement = (0, 0)
         try:
             ctrl.init()
         except Exception:
@@ -106,14 +107,15 @@ class InputService():
     def mouse_move(self):
         self.mouse_relative_movement = pygame.mouse.get_rel()
         if self.mouse_relative_movement == (0,0):
-            self.events["MOUSE_MOVE"] = -1
+            self.input_roster["MOUSE_MOVE"] = -1
         else:
-            self.events["MOUSE_MOVE"] = 1
+            self.input_roster["MOUSE_MOVE"] = 1
 
     def tick(self, events):
         self.controllercheck()
         self.process_events(events)
         self.check_events()
+        self.mouse_move()
         for item in self.input_roster:
 
             if self.input_roster[item] == 0:    # never pressed
@@ -122,6 +124,9 @@ class InputService():
                 self.input_roster[item] += 1
             elif self.input_roster[item] < 0:   # negative / unpressed after first press
                 self.input_roster[item] -= 1
+        
+        self.input_roster["MOUSE_SCROLL_UP"] = 0
+        self.input_roster["MOUSE_SCROLL_DOWN"] = 0
 
 
     def process_events(self, events):
@@ -137,6 +142,8 @@ class InputService():
                 name = BUTTON_VALUE_TO_NAME.get(value, "unknown")
             elif target == "mouse":
                 name = MOUSE_VALUE_TO_NAME.get(value, "unknown")
+                if value in [4, 5] and event_type == pygame.MOUSEBUTTONUP:
+                    continue
             else:
                 name = "unknown"
             updown = -1 if event_type in [pygame.KEYUP, pygame.CONTROLLERBUTTONUP, pygame.MOUSEBUTTONUP] else 1

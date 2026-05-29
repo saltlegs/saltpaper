@@ -8,7 +8,36 @@ filetypes = {
     "anim":     [".png", ".jpg", ".bmp", ".gif"],
     "music":    [".wav", ".ogg", ".mp3"],
     "sound":    [".wav", ".ogg", ".mp3"],
+    "tilemap":  [".png", ".jpg", ".bmp", ".gif"],
 }
+
+class Tilemap():
+    def __init__(self, surface, tile_size=(16, 16)):
+        self.surface = surface
+        self.tile_size = tile_size
+        self._cache = {}
+
+    def get_tile(self, id):
+        if id in self._cache:
+            return self._cache[id]
+
+        width, height = self.tile_size
+        columns = self.surface.get_width() // width
+        if columns <= 0:
+            raise ValueError("invalid tile size for this tilemap surface")
+
+        row = id // columns
+        col = id % columns
+        x = col * width
+        y = row * height
+
+        if x + width > self.surface.get_width() or y + height > self.surface.get_height():
+            raise IndexError(f"tile index out of range: {id}")
+
+        rect = pygame.Rect(x, y, width, height)
+        tile = self.surface.subsurface(rect).copy()
+        self._cache[id] = tile
+        return tile
 
 class AssetService():
     def __init__(self, assets_folder_path):
@@ -22,7 +51,7 @@ class AssetService():
         self.roots.append(path)
 
     def get_kind(self, asset_id):
-        kind, name = id.split("_", 1)
+        kind, name = asset_id.split("_", 1)
         return kind
 
     def get_asset(self, id, frame=0):
@@ -32,7 +61,7 @@ class AssetService():
 
 
         if asset is not None:
-            return asset if kind is not "anim" else asset[frame]
+            return asset if kind != "anim" else asset[frame]
         
         extensions = filetypes.get(kind)
 
@@ -40,13 +69,14 @@ class AssetService():
             raise ValueError(f"unknown asset type: {kind}")
 
         searched = []
+        folder = "tilemaps" if kind == "tilemap" else kind
         for root in self.roots:
             for ext in extensions:
                 if kind == "anim":
                     i = 0
                     self.cache[id] = []
                     while i >= 0:
-                        path = root / kind / name / f"{name}_{i}{ext}"
+                        path = root / folder / name / f"{name}_{i}{ext}"
                         searched.append(str(path))
                         if path.exists():
                             asset = self._load_asset(kind, path)
@@ -56,7 +86,7 @@ class AssetService():
                     if len(self.cache[id] <= 1): raise ValueError("animated asset must have more than one frame")
                     return self.cache[id][frame]
                 else:
-                    path = root / kind / f"{name}{ext}"
+                    path = root / folder / f"{name}{ext}"
                     searched.append(str(path))
                     if path.exists():
                         asset = self._load_asset(kind, path)
@@ -81,6 +111,10 @@ class AssetService():
         if kind == "image":
             return pygame.image.load(path).convert_alpha()
 
+        if kind == "tilemap":
+            surface = pygame.image.load(path).convert_alpha()
+            return Tilemap(surface)
+
         if kind == "music":
             pygame.mixer.music.load(path)
             return path  # music is streamed so just return path
@@ -90,4 +124,4 @@ class AssetService():
 
         # tilesheet etc later
         return path
-    
+
