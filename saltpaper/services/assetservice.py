@@ -16,6 +16,7 @@ class Tilemap():
         self.surface = surface
         self.tile_size = tile_size
         self._cache = {}
+        self._multitile_cache = {}
 
     def get_tile(self, id):
         if id in self._cache:
@@ -38,6 +39,29 @@ class Tilemap():
         tile = self.surface.subsurface(rect).copy()
         self._cache[id] = tile
         return tile
+
+    def get_multi_tile(self, id, width, height):
+        if (id, width, height) in self._multitile_cache:
+            return self._multitile_cache[(id, width, height)]
+        
+        twidth, theight = self.tile_size
+        columns = self.surface.get_width() // twidth
+        if columns <= 0:
+            raise ValueError("invalid tile size for this tilemap surface")
+
+        row = id // columns
+        col = id % columns
+        x = col * twidth
+        y = row * theight
+
+        multitile_width = twidth * width
+        multitile_height = theight * height
+
+        rect = pygame.Rect(x, y, multitile_width, multitile_height)
+        multitile = self.surface.subsurface(rect).copy()
+        self._multitile_cache[(id, width, height)] = multitile
+        return multitile
+
 
 class AssetService():
     def __init__(self, assets_folder_path):
@@ -124,4 +148,7 @@ class AssetService():
 
         # tilesheet etc later
         return path
+    
+    def submit_surface(self, id, surface):
+        self.cache[id] = surface
 
