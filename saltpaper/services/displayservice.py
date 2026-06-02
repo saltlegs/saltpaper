@@ -87,6 +87,7 @@ class DisplayService():
         return self.layers
 
     def tick(self):
+        """ticks the display and all the layers, returns the delta time value"""
         if len(self.layers) == 0:
             raise ValueError("the display service has no layers to display. make sure they are added with displayservice.add_layer(layer)")
 
