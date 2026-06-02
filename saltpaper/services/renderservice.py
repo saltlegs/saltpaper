@@ -39,7 +39,12 @@ class RenderService():
                 surf = pygame.transform.scale(surf, new_size)
             
             pos = (int(renderable.position[0]), int(renderable.position[1]))
-            
+
+            layer_rect = renderable.layer.surface.get_rect()
+            sw, sh = surf.get_size()
+            if pos[0] + sw < 0 or pos[1] + sh < 0 or pos[0] > layer_rect.width or pos[1] > layer_rect.height:
+                continue
+
             self._queue(renderable.layer, pos, surf)
 
     def tick(self):

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from saltpaper import InputService
+    from saltpaper import Layer
 
 if __name__ == "__main__":
     sys.path.insert(0, str(Path(__file__).parent.parent.parent))
@@ -19,12 +20,14 @@ class DisplayService():
             target_frame_rate:int=120,
             caption="saltpaper engine display",
             vsync=True, # for testing
-            iconpath=None
+            iconpath=None,
+            fullscreen=False
     ):
         self.dimensions = dimensions
         self._caption = caption
         self.inputservice:'InputService' = inputservice
         self.target_frame_rate = target_frame_rate
+        self.fullscreen=fullscreen
 
         self.layers = []
 
@@ -36,7 +39,8 @@ class DisplayService():
         if iconpath is not None:
             iconsurf = pygame.image.load(iconpath)
             pygame.display.set_icon(iconsurf)
-        self.display = pygame.display.set_mode(dimensions, vsync=vsync)
+        flags = pygame.SCALED | pygame.FULLSCREEN if fullscreen else pygame.SCALED
+        self.display = pygame.display.set_mode(dimensions, flags, vsync=vsync)
 
         pygame.display.set_caption(caption)
         self.clock = pygame.time.Clock()
@@ -102,8 +106,21 @@ class DisplayService():
             if not layer.visible:
                 continue
             surf = layer.render()
-            offset = layer.offset
-            self.display.blit(surf, offset)
+            ox, oy = layer.offset
+            d_width, d_height = self.display.get_size()
+            
+            src_x = max(0, -ox)
+            src_y = max(0, -oy)
+            src_w = min(d_width, surf.get_width() - src_x)
+            src_h = min(d_height, surf.get_height() - src_y)
+            
+            if src_w <= 0 or src_h <= 0:  # layer is completely off screen
+                continue
+            
+            dest_x = max(0, ox)
+            dest_y = max(0, oy)
+            
+            self.display.blit(surf, (dest_x, dest_y), pygame.Rect(src_x, src_y, src_w, src_h))
             
         for func in self.funcs:
             func(self, self.delta)

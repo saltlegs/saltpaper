@@ -28,6 +28,18 @@ class VectorTools:
         )
     
     @staticmethod
+    def smoothstep(a: tuple[float, float], b: tuple[float, float], progress: float = 0.5) -> tuple[float, float]:
+        ax, ay = a
+        bx, by = b
+
+        t = progress ** 2 * (3 - 2 * progress)
+
+        return (
+            ax + (bx - ax) * t,
+            ay + (by - ay) * t
+        )
+    
+    @staticmethod
     def is_point_inside(point:tuple[int,int], x:int, y:int, width:int, height:int) -> bool:
         px, py = point
         return (x <= px < x + width) and (y <= py < y + height)

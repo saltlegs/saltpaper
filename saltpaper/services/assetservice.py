@@ -9,7 +9,21 @@ filetypes = {
     "music":    [".wav", ".ogg", ".mp3"],
     "sound":    [".wav", ".ogg", ".mp3"],
     "tilemap":  [".png", ".jpg", ".bmp", ".gif"],
+    "font":     [".ttf", ".otf"],
 }
+
+class FontMaker:
+    def __init__(self, path:Path):
+        self.path = path
+        self._cache = {}
+
+    def get_size(self, size) -> pygame.Font:
+        cached = self._cache.get(size)
+        if cached: return cached
+
+        this_font = pygame.Font(self.path, size)
+        self._cache[size] = this_font
+        return this_font
 
 class Tilemap():
     def __init__(self, surface, tile_size=(16, 16)):
@@ -93,7 +107,7 @@ class AssetService():
             raise ValueError(f"unknown asset type: {kind}")
 
         searched = []
-        folder = "tilemaps" if kind == "tilemap" else kind
+        folder = kind + "s"
         for root in self.roots:
             for ext in extensions:
                 if kind == "anim":
@@ -107,7 +121,7 @@ class AssetService():
                             self.cache[id].append(asset)
                         else:
                             i = -1
-                    if len(self.cache[id] <= 1): raise ValueError("animated asset must have more than one frame")
+                    if len(self.cache[id]) <= 1: raise ValueError("animated asset must have more than one frame")
                     return self.cache[id][frame]
                 else:
                     path = root / folder / f"{name}{ext}"
@@ -145,6 +159,9 @@ class AssetService():
 
         if kind == "sound":
             return pygame.mixer.Sound(path)
+
+        if kind == "font":
+            return FontMaker(path)
 
         # tilesheet etc later
         return path

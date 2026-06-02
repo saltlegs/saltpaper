@@ -1,4 +1,9 @@
 
+from typing import TypeVar, Type
+
+_T = TypeVar('_T')
+
+
 class Entity():
     _id_counter = 0
 
@@ -17,13 +22,13 @@ class Entity():
         for component in components:
             self.add(component)
 
-    def get(self, component_type):
+    def get(self, component_type: Type[_T]) -> _T | None:
         for comp_cls, comp in self.components.items():
             if issubclass(comp_cls, component_type):
-                return comp
+                return comp  # type: ignore[return-value]
         return None
 
-    def has(self, component_type):
+    def has(self, component_type: type) -> bool:
         return (self.get(component_type) is not None)
 
     def remove(self, component_type):
