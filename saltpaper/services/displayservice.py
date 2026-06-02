@@ -102,6 +102,8 @@ class DisplayService():
             if layer.ticking:
                 layer.tick(self.delta)
 
+        blit_list = []
+        layer:Layer
         for layer in self.layers_by_render:
             if not layer.visible:
                 continue
@@ -114,13 +116,15 @@ class DisplayService():
             src_w = min(d_width, surf.get_width() - src_x)
             src_h = min(d_height, surf.get_height() - src_y)
             
-            if src_w <= 0 or src_h <= 0:  # layer is completely off screen
+            if src_w <= 0 or src_h <= 0:
                 continue
             
             dest_x = max(0, ox)
             dest_y = max(0, oy)
             
-            self.display.blit(surf, (dest_x, dest_y), pygame.Rect(src_x, src_y, src_w, src_h))
+            blit_list.append((surf, (dest_x, dest_y), pygame.Rect(src_x, src_y, src_w, src_h)))
+
+        self.display.blits(blit_list)
             
         for func in self.funcs:
             func(self, self.delta)
